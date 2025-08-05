@@ -4,7 +4,6 @@ import { generatePrivateKey, getPublicKey as getPub } from "nostr-tools";
 import { fetchZapEndpoint, sendZap } from "./zap"; // Your Lightning/Zap util
 import { nip19, nip04 } from "nostr-tools";
 
-
 export default function App() {
   const [privkey, setPrivkey] = useState("");
   const [nsec, setNsec] = useState("");
@@ -50,11 +49,11 @@ export default function App() {
   }
 
   // Send Zap
-  async function zap() {
-    const zapEndpoint = await fetchZapEndpoint(peer); // LNURL or Lightning Address
-    await sendZap(zapEndpoint, pubkey, peer, 1000); // 1000 sats
-    setChats((c) => [...c, "Zap sent!"]);
-  }
+async function zap() {
+  const zapEndpoint = await fetchZapEndpoint(relay, peer);
+  await sendZap(relay, privkey, pubkey, peer, 1000);
+  setChats((c) => [...c, "Zap sent!"]);
+}
 
   return (
     <div>
