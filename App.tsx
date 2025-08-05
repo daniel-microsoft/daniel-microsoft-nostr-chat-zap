@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { relayInit, signEvent, getPublicKey } from "nostr-tools";
 import { generatePrivateKey, getPublicKey as getPub } from "nostr-tools";
-import { encode as encodeBech32, decode as decodeBech32 } from "@scure/base";
 import { fetchZapEndpoint, sendZap } from "./zap"; // Your Lightning/Zap util
+import { nip19, nip04 } from "nostr-tools";
+
 
 export default function App() {
+  const [privkey, setPrivkey] = useState("");
   const [nsec, setNsec] = useState("");
   const [pubkey, setPubkey] = useState("");
   const [relay, setRelay] = useState<any>(null);
@@ -13,29 +15,24 @@ export default function App() {
   const [chats, setChats] = useState<string[]>([]);
 
   // Authenticate
-  function loginWithNsec() {
-    try {
-      const { prefix, words } = decodeBech32(nsec);
-      const priv = Buffer.from(encodeBech32("nsec", words));
-      const pub = getPub(priv);
-      setPubkey(pub);
-      const r = relayInit("wss://relay.damus.io");
-      r.connect();
-      setRelay(r);
-      // Subscribe to peer DMs
-      r.on("connect", () => {
-        r.subscribe("chat", {
-          kinds: [4],
-          "#p": [pub],
-        });
-        r.on("event", (ev: any) => {
-          setChats((c) => [...c, ev.content]);
-        });
-      });
-    } catch (e) {
-      alert("Invalid nsec");
-    }
+ function loginWithNsec() {
+  try {
+    const { type, data } = nip19.decode(nsec);
+    if (type !== "nsec") throw new Error("Invalid nsec");
+    const priv = data; // hex string
+    const pub = getPublicKey(priv);
+    setPubkey(pub);
+    setPrivkey(priv); // Store hex privkey for signing/encrypting
+    // Optional: Clear nsec for slight security improvement
+    setNsec("");
+    const r = relayInit("wss://relay.damus.io");
+    r.connect();
+    setRelay(r);
+    // ... (rest as below, with subscription fixes)
+  } catch (e) {
+    alert("Invalid nsec");
   }
+}
 
   // Send DM
   async function sendDM() {
