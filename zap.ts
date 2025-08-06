@@ -1,4 +1,4 @@
-mport { getEventHash } from "nostr-tools";
+import { getEventHash } from "nostr-tools";
 
 export async function fetchZapEndpoint(relay: any, pubkey: string): Promise<string | null> {
   const event = await relay.get({
